@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyroscope Data</title>
+    <style>
+        *{
+            box-sizing: border-box;
+            padding: 0;
+            margin: 0;
+        }
+        body{
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items:center;
+            height: 100vh;
+            width: 100vw;
+        }
+        .left{
+            background-color: aqua;
+        }
+        .right{
+            background-color: lime;
+        }
+        .naoselecionavel{
+            -webkit-touch-callout: none;  
+            -webkit-user-select: none;    
+            -khtml-user-select: none;     
+            -moz-user-select: none;       
+            -ms-user-select: none;        
+            user-select: none;  
+        }
+        @media (min-aspect-ratio: 1/1) {
+        }
+    </style>
+</head>
+<body>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        let data={
+            alpha: 0,  // Rotation around Z axis
+            gamma: 0,
+            left: false,
+            right: false
+        }
+        const socket = io();
+        const left = document.getElementById('left')
+        const right = document.getElementById('right')
+        const body = document.querySelector('body')
+        document.addEventListener('touchstart', (event) => {
+            const numberOfTouches = event.touches.length;
+            if(numberOfTouches==1){
+                data.left = true
+                data.right = false
+                body.classList.add('left')
+                body.classList.remove('right')
+            }
+            else if(numberOfTouches==2){
+                data.right = true
+                data.left = false
+                body.classList.add('right')
+                body.classList.remove('left')
+            }
+            mandar()
+        });
+        document.addEventListener('touchend', (event) => {
+            data.left = false
+            data.right = false
+            body.classList = []
+            mandar()
+        });
+        function mandar(){
+            socket.emit('gyroscopeData', data);
+        }
+        // Check if gyroscope is supported
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', function(event) {
+                data.alpha=parseInt(event.rotationRate.alpha)
+                data.gamma=parseInt(event.rotationRate.gamma)
+                if(Math.abs(data.alpha)>=2||Math.abs(data.gamma)>=2){
+                    mandar()
+                }
+            });
+        } else {
+            console.log("Gyroscope is not supported on this device.");
+        }
+    </script>
+</body>
